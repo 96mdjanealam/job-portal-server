@@ -33,6 +33,73 @@ app.use(cors({
     credentials: true
 }));
 ```
+5. in the client side update onAuthStateChanged function in auth provider.
+```
+useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      console.log("user captured", currentUser);
+
+      if (currentUser?.email) {
+        const user = { email: currentUser.email };
+        axios.post("http://localhost:5000/jwt", user, {withCredentials: true})
+        .then(res=> console.log(res.data))
+      }
+
+      // put it in the right place
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+  ```
+  6. to clear the token cookie set a post req in server side
+  ```
+   app.post("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
+    ```
+    - call the api from client side into onAuthStateChanged function:
+    ```
+    if (currentUser?.email) {
+        const user = { email: currentUser.email };
+        axios
+          .post("http://localhost:5000/jwt", user, { withCredentials: true })
+          .then((res) => console.log("login token", res.data));
+      } else {
+        axios
+          .post(
+            "http://localhost:5000/logout",
+            {},
+            {
+              withCredentials: true,
+            }
+          )
+          .then((res) => console.log("logout", res.data));
+      }
+          ```
+          - place the setLoading correctly after login and logout operations
+          ```
+          .then((res) => {
+            console.log("login token", res.data);
+            setLoading(false);
+          });
+          ```
+          and >>>>
+        ```
+         .then((res) => {
+            console.log("logout", res.data);
+            setLoading(false);
+          });
+          ```
+
 
 
 
